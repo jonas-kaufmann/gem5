@@ -557,7 +557,10 @@ def build_system(np):
                             ) or ObjectList.is_kvm_cpu(FutureClass):
         for i, cpu in enumerate(sys.cpu):
             # Disable relying on performance counters for kvm cpu
-            cpu.usePerf = False
+            cpu.usePerf = True
+            cpu.usePerfOverflow = True
+            cpu.hostFreq = "2.4GHz"
+            cpu.useCoalescedMMIO = False
             # Child objects usually inherit the parent's event queue. Override
             # that and use the same event queue for all devices.
             for obj in cpu.descendants():
