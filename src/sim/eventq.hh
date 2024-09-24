@@ -1011,6 +1011,12 @@ class EventManager
     void
     schedule(Event &event, Tick when)
     {
+        if (when < eventq->getCurTick()) {
+          std::cerr
+              << "schedule() when < getCurTick(): curEventQueue()->name()="
+              << curEventQueue()->name() << " eventq->name()=" << eventq->name()
+              << std::endl;
+        }
         eventq->schedule(&event, when);
     }
 
@@ -1038,6 +1044,12 @@ class EventManager
     void
     schedule(Event *event, Tick when)
     {
+        if (when < eventq->getCurTick()) {
+          std::cerr
+              << "schedule() when < getCurTick(): curEventQueue()->name()="
+              << curEventQueue()->name() << " eventq->name()=" << eventq->name()
+              << std::endl;
+        }
         eventq->schedule(event, when);
     }
 
