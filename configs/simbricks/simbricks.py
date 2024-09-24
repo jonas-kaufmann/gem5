@@ -637,7 +637,7 @@ root = Root(full_system=True, system=sys)
 # Required for running kvm on multiple host cores. Uses gem5's parallel event
 # queue feature.
 if ObjectList.is_kvm_cpu(TestCPUClass) or ObjectList.is_kvm_cpu(FutureClass):
-    root.sim_quantum = int(1e8)  # 100 us
+    root.sim_quantum = int(2e6)  # 2 us
 
 if args.timesync:
     root.time_sync_enable = True
