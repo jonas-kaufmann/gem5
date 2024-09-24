@@ -567,7 +567,6 @@ def build_system(np):
                 obj.eventq_index = 0
             cpu.eventq_index = i + 1
         # Make all SimBricks devices still live in the main event queue
-        sys.pc.eventq_index = 0
         sys.kvm_vm = KvmVM()
 
     return sys
