@@ -53,6 +53,7 @@
 #include "debug/KvmIO.hh"
 #include "debug/KvmRun.hh"
 #include "params/BaseKvmCPU.hh"
+#include "sim/eventq.hh"
 #include "sim/process.hh"
 #include "sim/system.hh"
 
@@ -190,7 +191,7 @@ BaseKvmCPU::KVMCpuPort::nextIOState() const
 Tick
 BaseKvmCPU::KVMCpuPort::submitIO(PacketPtr pkt)
 {
-    if (cpu->system->isAtomicMode()) {
+    if (false /* cpu->system->isAtomicMode() */) {
         Tick delay = sendAtomic(pkt);
         delete pkt;
         return delay;
@@ -217,7 +218,10 @@ BaseKvmCPU::KVMCpuPort::recvTimingResp(PacketPtr pkt)
     // operations have completed.
     if (!(activeMMIOReqs || pendingMMIOPkts.size())) {
         DPRINTF(KvmIO, "KVM: Finished all outstanding timing requests\n");
-        cpu->finishMMIOPending();
+        {
+            EventQueue::ScopedMigration migrate(cpu->eventq);
+            cpu->finishMMIOPending();
+        }
     }
     return true;
 }
