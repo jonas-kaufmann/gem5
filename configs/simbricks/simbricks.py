@@ -500,17 +500,18 @@ def build_system(np):
         sys.iobridge.mem_side_port = sys.membus.cpu_side_ports
 
     # parametrize caches a bit
-    sys.l2.assoc = 16
-    sys.l2.assoc = 16
-    for cpu in sys.cpu:
-        cpu.dcache.data_latency = 0
-        cpu.dcache.response_latency = 0
-        cpu.dcache.tag_latency = 0
-        cpu.dcache.tags.tag_latency = 0
-        cpu.icache.data_latency = 0
-        cpu.icache.response_latency = 0
-        cpu.icache.tag_latency = 0
-        cpu.icache.tags.tag_latency = 0
+    if args.caches:
+        sys.l2.assoc = 16
+        sys.l2.assoc = 16
+        for cpu in sys.cpu:
+            cpu.dcache.data_latency = 0
+            cpu.dcache.response_latency = 0
+            cpu.dcache.tag_latency = 0
+            cpu.dcache.tags.tag_latency = 0
+            cpu.icache.data_latency = 0
+            cpu.icache.response_latency = 0
+            cpu.icache.tag_latency = 0
+            cpu.icache.tags.tag_latency = 0
 
     param_cpus(sys.cpu)
 
