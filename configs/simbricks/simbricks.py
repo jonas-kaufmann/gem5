@@ -234,6 +234,7 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
             self._num_simbricks_mem += 1
 
         def attachIO(self, bus, dma_ports=[], membus=None):
+            assert membus is not None
             super(SimBricksPc, self).attachIO(bus, dma_ports)
             print(
                 f"connecting {self._num_simbricks} pci & eth simbricks "
@@ -242,7 +243,7 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
             for i in range(0, self._num_simbricks):
                 dev = getattr(self, "simbricks_" + str(i))
                 dev.pio = bus.mem_side_ports
-                dev.dma = bus.cpu_side_ports
+                dev.dma = membus.cpu_side_ports
             print(
                 f"connecting {self._num_simbricks_mem} mem simbricks "
                 "adapters"
