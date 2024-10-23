@@ -65,7 +65,7 @@ Adapter::close()
 void
 Adapter::processInEvent()
 {
-    DPRINTF(SimBricks, "simbricks: processInEvent\n");
+    // DPRINTF(SimBricks, "simbricks: processInEvent\n");
 
     /* run what we can */
     while (poll());
