@@ -484,9 +484,16 @@ def build_system(np):
 
     if args.caches or args.l2cache:
         # By default the IOCache runs at the system clock
-        sys.io_to_l2_bridge = Bridge(delay="0ns", ranges=sys.mem_ranges)
-        sys.io_to_l2_bridge.mem_side_port = sys.tol2bus.cpu_side_ports
-        sys.io_to_l2_bridge.cpu_side_port = sys.iobus.mem_side_ports
+        sys.iocache = IOCache(
+            addr_ranges=sys.mem_ranges,
+            assoc=16,
+            tag_latency=2,
+            data_latency=2,
+            response_latency=2,
+            write_buffers=64,
+        )
+        sys.iocache.cpu_side = sys.iobus.mem_side_ports
+        sys.iocache.mem_side = sys.tol2bus.cpu_side_ports
     elif not args.external_memory_system:
         sys.iobridge = Bridge(delay="50ns", ranges=sys.mem_ranges)
         sys.iobridge.cpu_side_port = sys.iobus.mem_side_ports
