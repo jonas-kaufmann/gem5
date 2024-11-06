@@ -99,6 +99,10 @@ class Adapter : public EventManager
     void outSend(volatile union SimbricksProtoBaseMsg *msg, uint8_t ty) {
         SimbricksBaseIfOutSend(&baseIf, msg, ty);
     }
+
+    size_t outMaxSize() {
+      return SimbricksBaseIfOutMsgLen(&baseIf);
+    }
 };
 
 template <typename TMI, typename TMO>
