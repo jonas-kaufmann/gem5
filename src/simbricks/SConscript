@@ -44,12 +44,13 @@ Import('*')
 
 if env['CONF']['USE_SIMBRICKS']:
     SimObject('SimBricks.py',
-        sim_objects=['SimBricksEthernet', 'SimBricksMem', 'SimBricksPci',
-            'SimBricksPciBar'])
+        sim_objects=['SimBricksEthernet', 'SimBricksMem',
+            'SimBricksMemSidechannel', 'SimBricksPci', 'SimBricksPciBar'])
     Source('base.cc')
     Source('init_manager.cc')
     Source('ethernet.cc')
     Source('mem.cc')
+    Source('mem_sidechannel.cc')
     Source('pci.cc')
     Source('pci_bar.cc')
     Source('cur_tick.cc')
@@ -58,6 +59,8 @@ DebugFlag('SimBricks')
 DebugFlag('SimBricksSync')
 DebugFlag('SimBricksEthernet')
 DebugFlag('SimBricksMem')
+DebugFlag('SimBricksMemSidechannel')
 DebugFlag('SimBricksPci')
 CompoundFlag('SimBricksAll', [ 'SimBricks', 'SimBricksSync',
-    'SimBricksEthernet', 'SimBricksMem', 'SimBricksPci'])
+    'SimBricksEthernet', 'SimBricksMem', 'SimBricksMemSidechannel',
+    'SimBricksPci'])

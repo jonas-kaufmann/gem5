@@ -35,7 +35,7 @@ def malformedSimBricksUrl(s):
 #        listen:UX_SOCKET_PATH:SHM_PATH
 # ARGS = :sync | :link_latency=XX | :sync_interval=XX
 def parseSimBricksUrl(s):
-    out = {"sync": False}
+    out = {}
     parts = s.split(":")
     if len(parts) < 2:
         malformedSimBricksUrl(s)
@@ -181,6 +181,7 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
             super(SimBricksPc, self).__init__()
             self._num_simbricks = 0
             self._num_simbricks_mem = 0
+            self._num_simbricks_mem_sidechannel = 0
             self._devid_next = 0
 
         def add_simbricks_pci(self, url):
@@ -233,6 +234,15 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
             setattr(self, "simbricks_mem_" + str(self._num_simbricks_mem), mem)
             self._num_simbricks_mem += 1
 
+        def add_simbricks_mem_sidechannel(self, url):
+            print("adding simbricks mem_sidechannel:", url)
+            params = parseSimBricksUrl(url)
+
+            dev = SimBricksMemSidechannel(**params)
+            dev.system = Parent.any
+            setattr(self, "simbricks_mem_sidechannel_" + str(self._num_simbricks_mem_sidechannel), dev)
+            self._num_simbricks_mem_sidechannel += 1
+
         def attachIO(self, bus, dma_ports=[], membus=None):
             super(SimBricksPc, self).attachIO(bus, dma_ports)
             print(
@@ -250,6 +260,11 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
             for i in range(0, self._num_simbricks_mem):
                 mem = getattr(self, "simbricks_mem_" + str(i))
                 mem.port = membus.mem_side_ports
+            
+            for i in range(0, self._num_simbricks_mem_sidechannel):
+                dev = getattr(self, "simbricks_mem_sidechannel_" + str(i))
+                dev.port = bus.cpu_side_ports
+
 
     # Platform
     self.pc = SimBricksPc()
@@ -263,6 +278,9 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
 
     for url in args.simbricks_mem:
         self.pc.add_simbricks_mem(url)
+
+    for url in args.simbricks_mem_sidechannel:
+        self.pc.add_simbricks_mem_sidechannel(url)
 
     self.pc.com_1.device = Terminal(port=args.termport, outfile="stdoutput")
 
@@ -602,6 +620,13 @@ parser.add_argument(
     type=str,
     default=[],
     help="Simbricks Mem blocks to add: SIZE@ADDR@ASID@URL",
+)
+parser.add_argument(
+    "--simbricks-mem_sidechannel",
+    action="append",
+    type=str,
+    default=[],
+    help="Simbricks memory side channel devices to add",
 )
 parser.add_argument(
     "--command-line-append",

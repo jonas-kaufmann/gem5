@@ -71,6 +71,20 @@ class SimBricksMem(SimObject):
     size = Param.Addr("Memory Size")
 
 
+class SimBricksMemSidechannel(SimObject):
+    type = "SimBricksMemSidechannel"
+    cxx_class = "gem5::simbricks::mem_sidechannel::Adapter"
+    cxx_header = "simbricks/mem_sidechannel.hh"
+
+    port = RequestPort("Port to send requests to memory")
+    system = Param.System(Parent.any, "System this device is part of")
+
+    listen = Param.Bool(False, "Open listening instead of connecting")
+    uxsocket_path = Param.String("unix socket path")
+    shm_path = Param.String("", "Shared memory path")
+    poll_interval = Param.Latency("100us", "poll interval size (unsync only)")
+
+
 class SimBricksPciBar(PciBar):
     type = "SimBricksPciBar"
     cxx_class = "gem5::simbricks::pci::Bar"
