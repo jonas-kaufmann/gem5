@@ -211,6 +211,14 @@ Adapter::poll()
     return true;
 }
 
+bool
+Adapter::peek(uint64_t ts)
+{
+    volatile union SimbricksProtoBaseMsg *msg =
+        SimbricksBaseIfInPeek(&baseIf, ts);
+    return msg != NULL;
+}
+
 } // namespace base
 } // namespace simbricks
 } // namespace gem5

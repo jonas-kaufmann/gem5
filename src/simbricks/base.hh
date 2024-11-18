@@ -79,6 +79,7 @@ class Adapter : public EventManager
     void startup();
 
     bool poll();
+    bool peek(uint64_t ts);
 
     void inDone(volatile union SimbricksProtoBaseMsg *msg) {
         SimbricksBaseIfInDone(&baseIf, msg);
