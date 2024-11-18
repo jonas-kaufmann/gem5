@@ -48,7 +48,9 @@ class Adapter : public EventManager
     bool sync;
     bool isListen;
     Tick pollInterval;
+    protected:
     EventFunctionWrapper inEvent;
+    private:
     EventFunctionWrapper outSyncEvent;
     struct SimbricksBaseIf baseIf;
     struct SimbricksBaseIfSHMPool *pool;
