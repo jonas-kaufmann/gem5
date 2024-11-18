@@ -25,8 +25,12 @@
 #ifndef __SIMBRICKS_MEM_HH__
 #define __SIMBRICKS_MEM_HH__
 
+#include <chrono>
+#include <thread>
+
 #include "mem/port.hh"
 #include "params/SimBricksMemSidechannel.hh"
+#include "sim/eventq.hh"
 #include "sim/sim_object.hh"
 #include "sim/system.hh"
 #include "simbricks/base.hh"
@@ -63,13 +67,50 @@ class MemPort : public RequestPort {
   }
 };
 
-class Adapter
-    : public SimObject,
-      public base::GenericBaseAdapter<SimbricksProtoMemH2M,
-                                      SimbricksProtoMemM2H>::Interface {
+class MemSidechannelAdapter
+    : public base::GenericBaseAdapter<SimbricksProtoMemH2M,
+                                      SimbricksProtoMemM2H> {
+ public:
+  MemSidechannelAdapter(SimObject &parent, Interface &intf_)
+      : base::GenericBaseAdapter<SimbricksProtoMemH2M, SimbricksProtoMemM2H>(
+            parent, intf_, false) {
+    // Main goal here is to override processInEvent function
+    this->inEvent =
+        EventFunctionWrapper([this] { processInEvent(); }, "MemSidechannelIn",
+                             false, this->inEvent.priority());
+  }
+
+ protected:
+  void processInEvent() {
+    // Process what we can
+    while (poll())
+      ;
+
+    // Start pollThread, which will schedule the inEvent again, once a message
+    // becomes available
+    if (pollThread.joinable()) {
+      pollThread.join();
+    }
+    pollThread = std::thread{[this] { this->pollThreadFn(); }};
+  }
+
+  void pollThreadFn() {
+    while (!this->peek(std::numeric_limits<uint64_t>::max())) {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+    // Got message, enqueue handling it for the current tick
+    this->eventq->lock();
+    this->eventq->schedule(&this->inEvent, this->eventq->getCurTick());
+    this->eventq->unlock();
+  }
+
+  std::thread pollThread{};
+};
+
+class Adapter : public SimObject, public MemSidechannelAdapter::Interface {
  protected:
   // SimBricks base adapter
-  base::GenericBaseAdapter<SimbricksProtoMemH2M, SimbricksProtoMemM2H> adapter;
+  MemSidechannelAdapter adapter;
 
   void handleInMsg(volatile SimbricksProtoMemH2M *msg) override final;
 

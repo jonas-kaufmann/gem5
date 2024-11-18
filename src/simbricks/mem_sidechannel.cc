@@ -43,10 +43,10 @@ extern "C" {
 
 Adapter::Adapter(const Params &p)
     : SimObject(p),
-      base::GenericBaseAdapter<SimbricksProtoMemH2M,
-                               SimbricksProtoMemM2H>::Interface(*this),
-      adapter(*this, *this, false),
-      memPort(name() + ".memPort", this), sys(p.system) {
+      MemSidechannelAdapter::Interface(*this),
+      adapter(*this, *this),
+      memPort(name() + ".memPort", this),
+      sys(p.system) {
   DPRINTF(SimBricksMemSidechannel,
           "simbricks-mem_sidechannel: adapter constructed\n");
 
