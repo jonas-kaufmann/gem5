@@ -77,7 +77,7 @@ class MemSidechannelAdapter
     // Main goal here is to override processInEvent function
     this->inEvent =
         EventFunctionWrapper([this] { processInEvent(); }, "MemSidechannelIn",
-                             false, this->inEvent.priority());
+                             false, this->inEvent.priority() - 1);
   }
 
  protected:
