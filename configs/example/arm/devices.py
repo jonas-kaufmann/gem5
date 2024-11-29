@@ -36,9 +36,10 @@
 # System components used by the bigLITTLE.py configuration script
 
 import m5
+import os
 from m5.objects import *
 
-m5.util.addToPath("../../")
+m5.util.addToPath(os.path.abspath(f"{os.path.dirname(__file__)}/../.."))
 from common import ObjectList
 from common.Caches import *
 
