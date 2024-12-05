@@ -1,0 +1,2 @@
+#!/bin/sh
+build/ARM/gem5.fast -d m5out-t01-cpt-1200 configs/simbricks/simbricks_arm.py --cpu-freq=1200MHz --kernel=../../../images_arm64/vmlinux --bootloader=system/arm/bootloader/arm64/boot.arm64 --disk-image=../../../images_arm64/output-gemstone/gemstone.raw --disk-image=./guest.tar --cpu=hpi --mem-size=2048MB --num-cores=4 --script=configs/boot/hack_back_ckpt.rcS
