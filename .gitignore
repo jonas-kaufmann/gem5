@@ -4,11 +4,14 @@ parser.out
 parsetab.py
 cscope.files
 cscope.out
+gem5-auto
+gem5out-*
 *.pyc
 *~
 .*.swp
 .*.swo
 m5out
+m5out-*
 /src/doxygen/html
 /ext/dramsim2/DRAMSim2
 /ext/mcpat/regression/*/*.out
