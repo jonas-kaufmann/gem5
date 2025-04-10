@@ -143,7 +143,7 @@ def create(args):
     want_caches = True if mem_mode == "timing" else False
 
     system = devices.SimpleSystem(
-        want_caches,
+        False,
         args.mem_size,
         platform=VExpress_GEM5_V2(),
         mem_mode=mem_mode,
