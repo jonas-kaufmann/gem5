@@ -38,7 +38,7 @@ from .dram_interfaces.ddr5 import (
     DDR5_8400_4x8,
 )
 from .dram_interfaces.hbm import HBM_1000_4H_1x128
-from .dram_interfaces.lpddr3 import LPDDR3_1600_1x32
+from .dram_interfaces.lpddr3 import LPDDR3_1600_1x32, LPDDR4_1066_1x32
 from .memory import ChanneledMemory
 
 
@@ -73,6 +73,11 @@ def SingleChannelLPDDR3_1600(
     size: Optional[str] = None,
 ) -> AbstractMemorySystem:
     return ChanneledMemory(LPDDR3_1600_1x32, 1, 64, size=size)
+
+def SingleChannelLPDDR4_1066(
+    size: Optional[str] = None,
+) -> AbstractMemorySystem:
+    return ChanneledMemory(LPDDR4_1066_1x32, 1, 64, size=size)
 
 
 def SingleChannelHBM(

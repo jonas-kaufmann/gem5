@@ -152,3 +152,20 @@ class LPDDR3_1600_1x32(DRAMInterface):
     IDD62 = "1.8mA"
     VDD = "1.8V"
     VDD2 = "1.2V"
+
+
+class LPDDR4_1066_1x32(LPDDR3_1600_1x32):
+    """Based on parameters from Vivado"""
+
+    _clk_period = 1000 / 533
+    tCK = f"{_clk_period}ns"
+
+    tRCD = f"18ns"
+
+    tRAS = "42ns"
+
+    tRP = f"21ns"
+
+    tBURST = f"{_clk_period * 4}ns"
+
+    tXAW = "40ns"

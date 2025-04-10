@@ -955,6 +955,23 @@ class LPDDR3_1600_1x32(DRAMInterface):
     VDD2 = "1.2V"
 
 
+class LPDDR4_1066_1x32(LPDDR3_1600_1x32):
+    """Based on parameters from Vivado"""
+
+    _clk_period = 1000 / 533
+    tCK = f"{_clk_period}ns"
+
+    tRCD = f"18ns"
+
+    tRAS = "42ns"
+
+    tRP = f"21ns"
+
+    tBURST = f"{_clk_period * 4}ns"
+
+    tXAW = "40ns"
+
+
 # A single GDDR5 x64 interface, with
 # default timings based on a GDDR5-4000 1 Gbit part (SK Hynix
 # H5GQ1H24AFR) in a 2x32 configuration.
