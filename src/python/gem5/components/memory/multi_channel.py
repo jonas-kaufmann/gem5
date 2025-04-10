@@ -33,7 +33,7 @@ from .dram_interfaces.ddr3 import (
 )
 from .dram_interfaces.ddr4 import DDR4_2400_8x8
 from .dram_interfaces.hbm import HBM_1000_4H_1x64
-from .dram_interfaces.lpddr3 import LPDDR3_1600_1x32
+from .dram_interfaces.lpddr3 import LPDDR3_1600_1x32, LPDDR4_1066_1x32
 from .memory import ChanneledMemory
 
 
@@ -68,3 +68,8 @@ def DualChannelLPDDR3_1600(
     size: Optional[str] = None,
 ) -> AbstractMemorySystem:
     return ChanneledMemory(LPDDR3_1600_1x32, 2, 64, size=size)
+
+def DualChannelLPDDR4_1066(
+    size: Optional[str] = None,
+) -> AbstractMemorySystem:
+    return ChanneledMemory(LPDDR4_1066_1x32, 2, 64, size=size)

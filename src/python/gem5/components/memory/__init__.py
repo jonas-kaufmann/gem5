@@ -30,6 +30,7 @@ from .multi_channel import (
     DualChannelDDR3_2133,
     DualChannelDDR4_2400,
     DualChannelLPDDR3_1600,
+    DualChannelLPDDR4_1066
 )
 from .single_channel import (
     DIMM_DDR5_4400,
@@ -40,6 +41,7 @@ from .single_channel import (
     SingleChannelDDR4_2400,
     SingleChannelHBM,
     SingleChannelLPDDR3_1600,
+    SingleChannelLPDDR4_1066,
 )
 
 try:
