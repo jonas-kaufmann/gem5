@@ -141,7 +141,7 @@ def create(args):
     want_caches = True if mem_mode == "timing" else False
 
     system = devices.SimpleSystem(
-        want_caches,
+        False,
         args.mem_size,
         mem_mode=mem_mode,
         workload=ArmFsLinux(object_file=SysPaths.binary(args.kernel)),
