@@ -52,6 +52,7 @@
 #include "debug/CachePort.hh"
 #include "debug/CacheRepl.hh"
 #include "debug/CacheVerbose.hh"
+#include "debug/CacheWriteAllocator.hh"
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/compressors/base.hh"
 #include "mem/cache/mshr.hh"
@@ -559,6 +560,9 @@ BaseCache::recvTimingResp(PacketPtr pkt)
 
         const bool allocate = (writeAllocator && mshr->wasWholeLineWrite) ?
             writeAllocator->allocate() : mshr->allocOnFill();
+        if (writeAllocator && mshr->wasWholeLineWrite && !writeAllocator->allocate()) {
+            DPRINTF(CacheWriteAllocator, "WriteAllocator: Skipping Cache line allocation\n");
+        }
         blk = handleFill(pkt, blk, writebacks, allocate);
         assert(blk != nullptr);
         ppFill->notify(CacheAccessProbeArg(pkt, accessor));
@@ -1901,7 +1905,7 @@ BaseCache::sendMSHRQueuePacket(MSHR* mshr)
             // write a cache line
             if (writeAllocator->delay(mshr->blkAddr)) {
                 Tick delay = blkSize / tgt_pkt->getSize() * clockPeriod();
-                DPRINTF(CacheVerbose, "Delaying pkt %s %llu ticks to allow "
+                DPRINTF(CacheWriteAllocator, "Delaying pkt %s %llu ticks to allow "
                         "for write coalescing\n", tgt_pkt->print(), delay);
                 mshrQueue.delay(mshr, delay);
                 return false;
@@ -2719,6 +2723,7 @@ void
 WriteAllocator::updateMode(Addr write_addr, unsigned write_size,
                            Addr blk_addr)
 {
+    DPRINTF(CacheWriteAllocator, "updateMode() with write_addr=%lu write_size=%u blk_addr=%lu\n", write_addr, write_size, blk_addr);
     // check if we are continuing where the last write ended
     if (nextAddr == write_addr) {
         delayCtr[blk_addr] = delayThreshold;
@@ -2730,13 +2735,13 @@ WriteAllocator::updateMode(Addr write_addr, unsigned write_size,
             if (mode == WriteMode::ALLOCATE &&
                 byteCount > coalesceLimit) {
                 mode = WriteMode::COALESCE;
-                DPRINTF(Cache, "Switched to write coalescing\n");
+                DPRINTF(CacheWriteAllocator, "Switched to write coalescing\n");
             } else if (mode == WriteMode::COALESCE &&
                        byteCount > noAllocateLimit) {
                 // and continue and switch to non-allocating mode if we
                 // pass the upper threshold
                 mode = WriteMode::NO_ALLOCATE;
-                DPRINTF(Cache, "Switched to write-no-allocate\n");
+                DPRINTF(CacheWriteAllocator, "Switched to write-no-allocate\n");
             }
         }
     } else {
@@ -2744,6 +2749,7 @@ WriteAllocator::updateMode(Addr write_addr, unsigned write_size,
         // over again
         byteCount = write_size;
         mode = WriteMode::ALLOCATE;
+        DPRINTF(CacheWriteAllocator, "Switched to write-allocate\n");
         resetDelay(blk_addr);
     }
     nextAddr = write_addr + write_size;

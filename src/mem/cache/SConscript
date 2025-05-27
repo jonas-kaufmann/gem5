@@ -58,6 +58,7 @@ DebugFlag('CachePort')
 DebugFlag('CacheRepl')
 DebugFlag('CacheTags')
 DebugFlag('CacheVerbose')
+DebugFlag('CacheWriteAllocator')
 DebugFlag('HWPrefetch')
 DebugFlag('MSHR')
 DebugFlag('HWPrefetchQueue')
@@ -66,6 +67,17 @@ DebugFlag('PartitionPolicy')
 # CacheTags is so outrageously verbose, printing the cache's entire tag
 # array on each timing access, that you should probably have to ask for
 # it explicitly even above and beyond CacheAll.
-CompoundFlag('CacheAll', ['Cache', 'CacheComp', 'CachePort', 'CacheRepl',
-                          'CacheVerbose', 'HWPrefetch', 'MSHR',
-                          'PartitionPolicy'])
+CompoundFlag(
+    "CacheAll",
+    [
+        "Cache",
+        "CacheComp",
+        "CachePort",
+        "CacheRepl",
+        "CacheVerbose",
+        "CacheWriteAllocator",
+        "HWPrefetch",
+        "MSHR",
+        "PartitionPolicy",
+    ],
+)
