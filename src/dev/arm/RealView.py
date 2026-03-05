@@ -1355,33 +1355,15 @@ class VExpress_GEM5_Base(RealView):
         int_el2_s_phys=ArmPPI(num=20, int_type="IRQ_TYPE_LEVEL_LOW"),
         int_el2_s_virt=ArmPPI(num=19, int_type="IRQ_TYPE_LEVEL_LOW"),
     )
-    generic_timer_mem = GenericTimerMem(
-        cnt_control_base=0x2A430000,
-        cnt_read_base=0x2A800000,
-        cnt_ctl_base=0x2A810000,
-        frames=[
-            GenericTimerFrame(
-                cnt_base=0x2A820000,
-                int_phys=ArmSPI(num=57),
-                int_virt=ArmSPI(num=133),
-            ),
-            GenericTimerFrame(
-                cnt_base=0x2A830000,
-                int_phys=ArmSPI(num=58),
-                int_virt=ArmSPI(num=134),
-            ),
-        ],
-    )
 
     system_watchdog = Sp805(pio_addr=0x2B060000, interrupt=ArmSPI(num=130))
 
     def _on_chip_devices(self):
         return [
-            self.generic_timer_mem,
             self.el2_watchdog,
             self.trusted_watchdog,
             self.system_watchdog,
-        ] + self.generic_timer_mem.frames
+        ]
 
     def _on_chip_memory(self):
         memories = [
