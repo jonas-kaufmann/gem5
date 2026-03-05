@@ -145,7 +145,7 @@ def create(args):
     system = devices.SimpleSystem(
         False,
         args.mem_size,
-        platform=VExpress_GEM5_V2(),
+        platform=VExpress_GEM5_Foundation(),
         mem_mode=mem_mode,
         workload=ArmFsLinux(object_file=SysPaths.binary(args.kernel)),
         readfile=args.script,
