@@ -113,6 +113,12 @@ cpu_types = {
     "atomic": (AtomicSimpleCPU, None, None, None),
     "minor": (MinorCPU, devices.L1I, devices.L1D, devices.L2),
     "hpi": (HPI.HPI, HPI.HPI_ICache, HPI.HPI_DCache, HPI.HPI_L2),
+    "thunderx": (
+        HPI.ThunderX_CPU,
+        HPI.ThunderX_ICache,
+        HPI.ThunderX_DCache,
+        HPI.ThunderX_L2
+    ),
     "o3": (
         O3_ARM_v7a.O3_ARM_v7a_3,
         O3_ARM_v7a.O3_ARM_v7a_ICache,

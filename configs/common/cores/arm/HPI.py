@@ -1798,6 +1798,26 @@ class HPI(ArmMinorCPU):
     mmu = HPI_MMU()
 
 
+class ThunderX_ICache(HPI_ICache):
+    # Rough config for a Cavium ThunderX
+    size = "64KiB"  # Actually 78 wKB but gem5 doesn't support that
+
+
+class ThunderX_DCache(HPI_DCache):
+    # Rough config for a Cavium ThunderX
+    size = "32KiB"
+
+
+class ThunderX_L2(HPI_L2):
+    # Rough config for a Cavium ThunderX
+    size = "16MiB"
+    mshrs = 64
+    write_buffers = 64
+
+class ThunderX_CPU(HPI):
+    executeMaxAccessesInMemory = 4
+
+
 __all__ = [
     "HPI_BP",
     "HPI_ITB",
@@ -1806,4 +1826,8 @@ __all__ = [
     "HPI_DCache",
     "HPI_L2",
     "HPI",
+    "ThunderX_ICache",
+    "ThunderX_DCache",
+    "ThunderX_L2",
+    "ThunderX_CPU"
 ]
