@@ -473,7 +473,7 @@ class SimpleSystem(BaseSimpleSystem):
         if self._caches:
             self.iocache = IOCache(addr_ranges=self.mem_ranges)
         else:
-            self.dmabridge = Bridge(delay="50ns", ranges=self.mem_ranges)
+            self.dmabridge = Bridge(delay="0ns", ranges=self.mem_ranges)
 
     def connect(self):
         self.iobridge.mem_side_port = self.iobus.cpu_side_ports
