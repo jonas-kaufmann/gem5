@@ -2,6 +2,7 @@ build
 gem5_build
 parser.out
 parsetab.py
+compile_commands.json
 cscope.files
 cscope.out
 gem5-auto
