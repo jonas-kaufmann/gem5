@@ -1728,9 +1728,12 @@ class HPI_DCache(Cache):
     assoc = 4
     write_buffers = 4
     prefetcher = StridePrefetcher(queue_size=4, degree=4)
+    writeback_clean = True
+    write_allocator = WriteAllocator(no_allocate_limit=4)
 
 
 class HPI_L2(Cache):
+    # Rough config for a 4-core ARM Cortex A53 L2 cache
     data_latency = 13
     tag_latency = 13
     response_latency = 5
@@ -1739,7 +1742,8 @@ class HPI_L2(Cache):
     size = "1024KiB"
     assoc = 16
     write_buffers = 16
-    # prefetcher FIXME
+    clusivity = "mostly_excl"
+    write_allocator = WriteAllocator(no_allocate_limit=128)
 
 
 class HPI(ArmMinorCPU):
