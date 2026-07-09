@@ -37,18 +37,16 @@ Research Starter Kit on System Modeling. More information can be found
 at: http://www.arm.com/ResearchEnablement/SystemModeling
 """
 
-from m5.util.dot_writer import do_dot
-
 import argparse
 import os
+import sys
 
 import m5
 from m5.objects import *
-from m5.objects import (
-    Armv8
-)
+from m5.objects import Armv8
 from m5.options import *
 from m5.util import addToPath
+from m5.util.dot_writer import do_dot
 
 addToPath(os.path.abspath(f"{os.path.dirname(__file__)}/../example/arm"))
 
