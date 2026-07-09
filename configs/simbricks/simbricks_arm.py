@@ -38,6 +38,7 @@ at: http://www.arm.com/ResearchEnablement/SystemModeling
 """
 
 import argparse
+import atexit
 import os
 import sys
 
@@ -102,6 +103,12 @@ def parseSimBricksUrl(s):
         else:
             malformedSimBricksUrl(s)
     return out
+
+
+def _to_latency(value):
+    """Helper function to convert a latency string to seconds."""
+
+    return m5.util.convert.anyToLatency(value)
 
 
 # Pre-defined CPU configurations. Each tuple must be ordered as : (cpu_class,
@@ -243,18 +250,58 @@ def create(args):
 
 
 def run(args):
-    while True:
-        event = m5.simulate()
+    exit_dump_unregistered = False
+    stats_dump_period = None
+    stats_dump_window = None
+
+    if args.stats_dump_period is not None:
+        stats_dump_period = m5.ticks.fromSeconds(args.stats_dump_period)
+        stats_dump_window = m5.ticks.fromSeconds(args.stats_dump_window)
+
+    def simulate(ticks=None):
+        nonlocal exit_dump_unregistered
+
+        event = m5.simulate() if ticks is None else m5.simulate(ticks)
+        if stats_dump_period and not exit_dump_unregistered:
+            atexit.unregister(m5.stats.dump)
+            exit_dump_unregistered = True
+        return event
+
+    def handle_exit(event, dump_partial_stats=False):
         exit_msg = event.getCause()
+        if exit_msg == "simulate() limit reached":
+            return False
+
+        if dump_partial_stats:
+            print(f"Dumping partial stats at tick {m5.curTick()}")
+            m5.stats.dump()
+
         if exit_msg == "checkpoint":
             print("Dropping checkpoint at tick %d" % m5.curTick())
             cpt_dir = os.path.join(args.checkpoint_dir, "cpt.%d" % m5.curTick())
             m5.checkpoint(os.path.join(cpt_dir))
             print("Checkpoint done.")
+            return True
+
+        print(f"{exit_msg} ({event.getCode()}) @ {m5.curTick()}")
+        return True
+
+    if not stats_dump_period:
+        while True:
+            if handle_exit(simulate()):
+                return
+
+    while True:
+        m5.stats.reset()
+        event = simulate(stats_dump_window)
+        if handle_exit(event, dump_partial_stats=True):
             return
-        else:
-            print(f"{exit_msg} ({event.getCode()}) @ {m5.curTick()}")
-            break
+
+        m5.stats.dump()
+
+        event = simulate(stats_dump_period - stats_dump_window)
+        if handle_exit(event):
+            return
 
 
 def arm_ppi_arg(int_num: int) -> int:
@@ -374,6 +421,18 @@ def main():
         help="Whether to write terminal output to a file instead of stdout",
         default=False
     )
+    parser.add_argument(
+        "--stats-dump-period",
+        type=_to_latency,
+        default=None,
+        help="Period between stats collection windows, e.g. 10ms",
+    )
+    parser.add_argument(
+        "--stats-dump-window",
+        type=_to_latency,
+        default=None,
+        help="Stats collection window length, e.g. 100us",
+    )
 
     # SimBricks args
     parser.add_argument(
@@ -385,6 +444,23 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if (args.stats_dump_period is None) != (args.stats_dump_window is None):
+        parser.error(
+            "--stats-dump-period and --stats-dump-window must be provided "
+            "together"
+        )
+
+    if args.stats_dump_period is not None:
+        if args.stats_dump_period <= 0:
+            parser.error("--stats-dump-period must be greater than zero")
+        if args.stats_dump_window <= 0:
+            parser.error("--stats-dump-window must be greater than zero")
+        if args.stats_dump_window >= args.stats_dump_period:
+            parser.error(
+                "--stats-dump-window must be smaller than "
+                "--stats-dump-period"
+            )
 
     root = Root(full_system=True)
     root.system = create(args)
