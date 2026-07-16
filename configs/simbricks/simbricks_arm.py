@@ -162,6 +162,7 @@ def create(args):
         readfile=args.script,
     )
     system.release = Armv8()
+    system.exit_on_work_items = args.stats_dump_period is not None
 
     terminal_dest = "file" if args.write_terminal_output else "stdoutput"
     system.terminal = Terminal(port=3456, outfile=terminal_dest)
@@ -253,6 +254,9 @@ def run(args):
     exit_dump_unregistered = False
     stats_dump_period = None
     stats_dump_window = None
+    sampling_waiting_for_workbegin = args.stats_dump_period is not None
+    sampling_active = False
+    sampling_finished = False
 
     if args.stats_dump_period is not None:
         stats_dump_period = m5.ticks.fromSeconds(args.stats_dump_period)
@@ -268,9 +272,33 @@ def run(args):
         return event
 
     def handle_exit(event, dump_partial_stats=False):
+        nonlocal sampling_active, sampling_waiting_for_workbegin, sampling_finished
+
         exit_msg = event.getCause()
         if exit_msg == "simulate() limit reached":
-            return False
+            return "limit"
+
+        if "workbegin" in exit_msg:
+            print(f"workbegin ({event.getCode()}) @ {m5.curTick()}")
+            if sampling_waiting_for_workbegin:
+                print(f"Starting stats sampling at tick {m5.curTick()}")
+                sampling_waiting_for_workbegin = False
+                sampling_active = True
+            return "continue"
+
+        if "workend" in exit_msg:
+            print(f"workend ({event.getCode()}) @ {m5.curTick()}")
+            if sampling_waiting_for_workbegin:
+                return "continue"
+            if not sampling_finished:
+                if dump_partial_stats and sampling_active:
+                    print(f"Dumping partial stats at tick {m5.curTick()}")
+                    m5.stats.dump()
+                print(f"Stopping stats sampling at tick {m5.curTick()}")
+                sampling_active = False
+                sampling_waiting_for_workbegin = False
+                sampling_finished = True
+            return "continue"
 
         if dump_partial_stats:
             print(f"Dumping partial stats at tick {m5.curTick()}")
@@ -281,27 +309,38 @@ def run(args):
             cpt_dir = os.path.join(args.checkpoint_dir, "cpt.%d" % m5.curTick())
             m5.checkpoint(os.path.join(cpt_dir))
             print("Checkpoint done.")
-            return True
+            return "stop"
 
         print(f"{exit_msg} ({event.getCode()}) @ {m5.curTick()}")
-        return True
+        return "stop"
 
     if not stats_dump_period:
         while True:
-            if handle_exit(simulate()):
+            if handle_exit(simulate()) == "stop":
                 return
 
     while True:
+        if not sampling_active:
+            if handle_exit(simulate()) == "stop":
+                return
+            continue
+
         m5.stats.reset()
         event = simulate(stats_dump_window)
-        if handle_exit(event, dump_partial_stats=True):
+        action = handle_exit(event, dump_partial_stats=True)
+        if action == "stop":
             return
+        if action != "limit":
+            continue
 
         m5.stats.dump()
 
         event = simulate(stats_dump_period - stats_dump_window)
-        if handle_exit(event):
+        action = handle_exit(event)
+        if action == "stop":
             return
+        if action != "limit":
+            continue
 
 
 def arm_ppi_arg(int_num: int) -> int:
