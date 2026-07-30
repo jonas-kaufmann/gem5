@@ -152,10 +152,12 @@ def create(args):
     mem_mode = cpu_class.memory_mode()
     # Only simulate caches when using a timing CPU (e.g., the HPI model)
     want_caches = True if mem_mode == "timing" else False
+    cache_line_size = args.cache_line_size
 
     system = devices.SimpleSystem(
         False,
         args.mem_size,
+        cache_line_size=cache_line_size,
         platform=VExpress_GEM5_Foundation(),
         mem_mode=mem_mode,
         workload=ArmFsLinux(object_file=SysPaths.binary(args.kernel)),
@@ -398,6 +400,13 @@ def main():
         help="CPU model to use",
     )
     parser.add_argument("--cpu-freq", type=str, default="4GHz")
+    parser.add_argument(
+        "--cache-line-size",
+        type=int,
+        choices=(64, 128),
+        default=64,
+        help=("Cache line size in bytes."),
+    )
     parser.add_argument(
         "--num-cores", type=int, default=1, help="Number of CPU cores"
     )
