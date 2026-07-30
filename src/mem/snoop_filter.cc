@@ -222,9 +222,10 @@ SnoopFilter::lookupSnoop(const Packet* cpkt)
     // we need a special case for Writebacks. Additionally cache maintenance
     // operations can generate snoops as they clean and/or invalidate all
     // caches down to the specified point of reference.
-    assert(cpkt->isWriteback() || cpkt->req->isUncacheable() ||
-           (cpkt->isInvalidate() == cpkt->needsWritable()) ||
-           cpkt->req->isCacheMaintenance());
+    panic_if(!(cpkt->isWriteback() || cpkt->req->isUncacheable() ||
+               (cpkt->isInvalidate() == cpkt->needsWritable()) ||
+               cpkt->req->isCacheMaintenance()),
+             "Invalid snoop packet: %s\n", cpkt->print());
     if (cpkt->isInvalidate() && sf_item.requested.none()) {
         // Early clear of the holder, if no other request is currently going on
         // @todo: This should possibly be updated even though we do not filter
