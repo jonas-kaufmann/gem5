@@ -155,7 +155,7 @@ def create(args):
     cache_line_size = args.cache_line_size
 
     system = devices.SimpleSystem(
-        False,
+        want_caches,
         args.mem_size,
         cache_line_size=cache_line_size,
         platform=VExpress_GEM5_Foundation(),
