@@ -151,7 +151,7 @@ def create(args):
     cpu_class = cpu_types[args.cpu][0]
     mem_mode = cpu_class.memory_mode()
     # Only simulate caches when using a timing CPU (e.g., the HPI model)
-    want_caches = True if mem_mode == "timing" else False
+    want_caches = mem_mode == "timing" and not args.disable_caches
     cache_line_size = args.cache_line_size
 
     system = devices.SimpleSystem(
@@ -400,6 +400,11 @@ def main():
         help="CPU model to use",
     )
     parser.add_argument("--cpu-freq", type=str, default="4GHz")
+    parser.add_argument(
+        "--disable-caches",
+        action="store_true",
+        help="Connect CPUs directly to the memory bus without L1/L2 caches.",
+    )
     parser.add_argument(
         "--cache-line-size",
         type=int,
