@@ -684,6 +684,201 @@ class DDR4_2400_4x16(DDR4_2400_16x4):
     IDD3P1 = "41mA"
 
 
+class DDR4_1866_16x4_Enzian(DDR4_2400_16x4):
+    """
+    Kingston 9965640-033.C00G:
+    32 GiB, 2Rx4, Micron 8-Gbit devices
+    Configured by the Enzian ThunderX LMC at DDR4-1866
+
+
+    # dmidecode 3.2
+    Getting SMBIOS data from sysfs.
+    SMBIOS 3.0.0 present.
+
+    Handle 0x001C, DMI type 17, 40 bytes
+    Memory Device
+        Array Handle: 0x001A
+        Error Information Handle: Not Provided
+        Total Width: 72 bits
+        Data Width: 64 bits
+        Size: 32 GB
+        Form Factor: DIMM
+        Set: Unknown
+        Locator: DIMM 0
+        Bank Locator: LMC 0
+        Type: DDR4
+        Type Detail: Registered (Buffered)
+        Speed: 2666 MT/s
+        Manufacturer: Kingston
+        Serial Number: #041837EF1D323B
+        Asset Tag: Unknown Asset #
+        Part Number: 9965640-033.C00G    
+        Rank: 2
+        Configured Memory Speed: 1866 MT/s
+        Minimum Voltage: Unknown
+        Maximum Voltage: Unknown
+        Configured Voltage: Unknown
+    ...
+
+
+    # decode-dimms version $Revision$
+
+    Memory Serial Presence Detect Decoder
+    By Philip Edelbrock, Christian Zuckschwerdt, Burkart Lingner,
+    Jean Delvare, Trent Piepho and others
+
+
+    Decoding EEPROM: /sys/bus/i2c/drivers/ee1004/0-0050
+    Guessing DIMM is in                              bank 1
+
+    ---=== SPD EEPROM Information ===---
+    EEPROM CRC of bytes 0-125                        OK (0x1675)
+    # of bytes written to SDRAM EEPROM               384
+    Total number of bytes in EEPROM                  512
+    Fundamental Memory type                          DDR4 SDRAM
+    SPD Revision                                     1.2
+    Module Type                                      RDIMM
+    EEPROM CRC of bytes 128-253                      OK (0x69BC)
+
+    ---=== Memory Characteristics ===---
+    Maximum module speed                             2666 MHz (PC4-21300)
+    Size                                             32768 MB
+    Banks x Rows x Columns x Bits                    16 x 17 x 10 x 64
+    SDRAM Device Width                               4 bits
+    Ranks                                            2
+    Rank Mix                                         Symmetrical
+    Bus Width Extension                              8 bits
+    AA-RCD-RP-RAS (cycles)                           19-19-19-43
+    Supported CAS Latencies                          20T, 19T, 18T, 17T, 16T, 15T, 14T, 13T, 12T, 11T, 10T
+
+    ---=== Timings at Standard Speeds ===---
+    AA-RCD-RP-RAS (cycles) as DDR4-2666              19-19-19-43
+    AA-RCD-RP-RAS (cycles) as DDR4-2400              17-17-17-39
+    AA-RCD-RP-RAS (cycles) as DDR4-2133              15-15-15-35
+    AA-RCD-RP-RAS (cycles) as DDR4-1866              13-13-13-30
+    AA-RCD-RP-RAS (cycles) as DDR4-1600              11-11-11-26
+
+    ---=== Timing Parameters ===---
+    Minimum Cycle Time (tCKmin)                      0.750 ns
+    Maximum Cycle Time (tCKmax)                      1.600 ns
+    Minimum CAS Latency Time (tAA)                   13.750 ns
+    Minimum RAS to CAS Delay (tRCD)                  13.750 ns
+    Minimum Row Precharge Delay (tRP)                13.750 ns
+    Minimum Active to Precharge Delay (tRAS)         32.000 ns
+    Minimum Active to Auto-Refresh Delay (tRC)       45.750 ns
+    Minimum Recovery Delay (tRFC1)                   350.000 ns
+    Minimum Recovery Delay (tRFC2)                   260.000 ns
+    Minimum Recovery Delay (tRFC4)                   160.000 ns
+    Minimum Four Activate Window Delay (tFAW)        12.000 ns
+    Minimum Row Active to Row Active Delay (tRRD_S)  3.000 ns
+    Minimum Row Active to Row Active Delay (tRRD_L)  4.900 ns
+    Minimum CAS to CAS Delay (tCCD_L)                5.000 ns
+    Minimum Write Recovery Time (tWR)                15.000 ns
+    Minimum Write to Read Time (tWTR_S)              2.500 ns
+    Minimum Write to Read Time (tWTR_L)              7.500 ns
+
+    ---=== Other Information ===---
+    Package Type                                     Monolithic
+    Maximum Activate Count                           Unlimited
+    Post Package Repair                              One row per bank group
+    Soft PPR                                         Supported
+    Module Nominal Voltage                           1.2 V
+    Thermal Sensor                                   TSE2004 compliant
+
+    ---=== Physical Characteristics ===---
+    Module Height                                    32 mm
+    Module Thickness                                 2 mm front, 2 mm back
+    Module Reference Card                            B revision 2
+
+    ---=== Manufacturer Data ===---
+    Module Manufacturer                              Kingston
+    DRAM Manufacturer                                Micron Technology
+    Manufacturing Location Code                      0x04
+    Manufacturing Date                               2018-W37
+    Assembly Serial Number                           0xEF1D323B
+    Part Number                                      9965640-033.C00G    
+    ...
+    """
+
+    # DDR4-1866.67: 933.33 MHz command clock
+    tCK = "1.071ns"
+
+    # BL8: four command clocks
+    tBURST = "4.284ns"
+
+    # SPD standard-speed profile: 13-13-13-30
+    tRCD = "13.923ns"       # 13 CK
+    tCL = "13.923ns"        # 13 CK
+    tRP = "13.923ns"        # 13 CK
+    tRAS = "32.13ns"        # 30 CK
+
+    # DDR4-1866 CWL = 10
+    tCWL = "10.71ns"
+
+    # Bank-group and activation timings
+    tCCD_L = "5.355ns"      # 5 CK
+    tRRD = "4.284ns"        # tRRD_S, 4 CK
+    tRRD_L = "5.355ns"      # 5 CK
+    tXAW = "17.136ns"       # tFAW, 16 CK
+    activation_limit = 4
+
+    # SPD absolute minima / corresponding DDR4 cycle constraints
+    tWR = "15ns"
+    tWTR = "3.213ns"        # tWTR_S, 3 CK
+    tWTR_L = "7.5ns"        # 7 CK rounds to SPD minimum
+    tRTP = "7.5ns"
+
+    # Controller approximations inherited from the existing gem5 DDR4 model
+    tRTW = "2.142ns"        # 2 CK
+    tCS = "2.142ns"         # 2 CK
+
+    # 8-Gbit device refresh
+    tRFC = "350ns"
+    tREFI = "7.8us"
+
+    tXP = "6.426ns"         # 6 CK
+    tXS = "360ns"           # tRFC + 10 ns
+
+    # The controller geometry models the x64 data path as 16 x4 devices per
+    # rank. The physical x72 ECC RDIMM has 18 x4 devices per rank (16 data +
+    # two ECC), while gem5 uses devices_per_rank to scale DRAMPower energy.
+    # Keep the x64 geometry intact and compensate its reported DRAM-chip
+    # energy by scaling every per-device current by 18 / 16 here.
+    _ecc_power_scale = 18 / 16
+
+    # Micron MT40A2G4SA, die revision E. DDR4-1600/1866 use the DDR4-2133
+    # IDD/IPP limits. Values are scaled for all 18 physical devices/rank.
+    # VDD is 1.2V; VDD2 represents the 2.5V VPP domain.
+    IDD0 = f"{37 * _ecc_power_scale}mA"
+    IDD02 = f"{3 * _ecc_power_scale}mA"
+
+    IDD2N = f"{29 * _ecc_power_scale}mA"
+    IDD2N2 = f"{3 * _ecc_power_scale}mA"
+    IDD2P0 = f"{22 * _ecc_power_scale}mA"
+    IDD2P02 = f"{3 * _ecc_power_scale}mA"
+    IDD2P1 = f"{22 * _ecc_power_scale}mA"
+    IDD2P12 = f"{3 * _ecc_power_scale}mA"
+
+    IDD3N = f"{34 * _ecc_power_scale}mA"
+    IDD3N2 = f"{3 * _ecc_power_scale}mA"
+    IDD3P0 = f"{28 * _ecc_power_scale}mA"
+    IDD3P02 = f"{3 * _ecc_power_scale}mA"
+    IDD3P1 = f"{28 * _ecc_power_scale}mA"
+    IDD3P12 = f"{3 * _ecc_power_scale}mA"
+
+    IDD4R = f"{110 * _ecc_power_scale}mA"
+    IDD4R2 = f"{3 * _ecc_power_scale}mA"
+    IDD4W = f"{96 * _ecc_power_scale}mA"
+    IDD4W2 = f"{3 * _ecc_power_scale}mA"
+
+    IDD5 = f"{46 * _ecc_power_scale}mA"
+    IDD52 = f"{5 * _ecc_power_scale}mA"
+    IDD6 = f"{34 * _ecc_power_scale}mA"
+    IDD62 = f"{5 * _ecc_power_scale}mA"
+    VDD = "1.2V"
+    VDD2 = "2.5V"
+
+
 # A single LPDDR2-S4 x32 interface (one command/address bus), with
 # default timings based on a LPDDR2-1066 4 Gbit part (Micron MT42L128M32D1)
 # in a 1x32 configuration.
