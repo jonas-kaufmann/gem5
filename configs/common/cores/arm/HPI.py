@@ -1814,7 +1814,13 @@ class ThunderX_L2(HPI_L2):
     mshrs = 64
     write_buffers = 64
 
+
+class ThunderX_ISA(ArmISA):
+    midr = 0x431F0A11
+
+
 class ThunderX_CPU(HPI):
+    ArchISA = ThunderX_ISA
     executeMaxAccessesInMemory = 4
 
 
