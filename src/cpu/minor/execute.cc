@@ -543,6 +543,33 @@ cyclicIndexDec(unsigned int index, unsigned int cycle_size)
     return ret;
 }
 
+/**
+ * Return every issue-port state that remains possible after reserving one of
+ * the given alternatives. Each bit in an alternative identifies an issue
+ * port that the instruction requires. Keeping all surviving states avoids an
+ * arbitrary placement of flexible instructions: an ALU instruction that can
+ * use either pipe can still be placed opposite a later pipe-specific
+ * instruction in the same cycle.
+ */
+static std::vector<unsigned int>
+reserveIssuePorts(const std::vector<unsigned int> &used_ports,
+    const std::vector<unsigned int> &alternatives)
+{
+    if (alternatives.empty())
+        return used_ports;
+
+    std::vector<unsigned int> new_states;
+
+    for (unsigned int used : used_ports) {
+        for (unsigned int reservation : alternatives) {
+            if ((used & reservation) == 0)
+                new_states.push_back(used | reservation);
+        }
+    }
+
+    return new_states;
+}
+
 unsigned int
 Execute::issue(ThreadID thread_id)
 {
@@ -567,6 +594,10 @@ Execute::issue(ThreadID thread_id)
 
     /* Number of memory ops issues this cycle to check for memoryIssueLimit */
     unsigned num_mem_insts_issued = 0;
+
+    /* All viable occupied-port masks after instructions issued this cycle.
+     * A zero mask represents the initial state with no ports reserved. */
+    std::vector<unsigned int> issue_port_states(1, 0);
 
     do {
         MinorDynInstPtr inst = insts_in->insts[thread.inputIndex];
@@ -678,6 +709,32 @@ Execute::issue(ThreadID thread_id)
                         DPRINTF(MinorExecute, "Can't issue inst: %s yet\n",
                             *inst);
                     } else {
+                        const std::vector<unsigned int> *port_reservations =
+                            &(fu->description.issuePortReservations);
+
+                        if (timing && !timing->issuePortReservations.empty()) {
+                            port_reservations =
+                                &(timing->issuePortReservations);
+                        } else if (!inst->isFault() &&
+                            inst->staticInst->isControl() &&
+                            !fu->description.controlIssuePortReservations.empty())
+                        {
+                            port_reservations =
+                                &(fu->description.controlIssuePortReservations);
+                        }
+
+                        std::vector<unsigned int> new_issue_port_states =
+                            reserveIssuePorts(issue_port_states,
+                                *port_reservations);
+
+                        if (new_issue_port_states.empty()) {
+                            DPRINTF(MinorExecute,
+                                "Can't issue inst: %s to FU: %d due to issue"
+                                " port contention\n", *inst, fu_index);
+                            fu_index++;
+                            continue;
+                        }
+
                         /* Can insert the instruction into this FU */
                         DPRINTF(MinorExecute, "Issuing inst: %s"
                             " into FU %d\n", *inst,
@@ -746,6 +803,7 @@ Execute::issue(ThreadID thread_id)
 
                         /* Issue to FU */
                         fu->push(fu_inst);
+                        issue_port_states = std::move(new_issue_port_states);
                         /* And start the countdown on activity to allow
                          *  this instruction to get to the end of its FU */
                         cpu.activityRecorder->activity();

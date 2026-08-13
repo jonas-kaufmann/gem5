@@ -67,6 +67,7 @@ MinorFUTiming::MinorFUTiming(
     match(params.match),
     description(params.description),
     suppress(params.suppress),
+    issuePortReservations(params.issuePortReservations),
     extraCommitLat(params.extraCommitLat),
     extraCommitLatExpr(params.extraCommitLatExpr),
     extraAssumedLat(params.extraAssumedLat),
