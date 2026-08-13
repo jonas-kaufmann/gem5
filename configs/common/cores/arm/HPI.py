@@ -1821,7 +1821,6 @@ class ThunderX_ISA(ArmISA):
 
 class ThunderX_CPU(HPI):
     ArchISA = ThunderX_ISA
-    executeMaxAccessesInMemory = 4
 
 
 __all__ = [
