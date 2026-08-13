@@ -39,6 +39,7 @@ at: http://www.arm.com/ResearchEnablement/SystemModeling
 
 import argparse
 import atexit
+import datetime
 import os
 import sys
 
@@ -259,6 +260,29 @@ def run(args):
     sampling_waiting_for_workbegin = args.stats_dump_period is not None
     sampling_active = False
     sampling_finished = False
+
+    if args.heartbeat:
+
+        class HeartbeatEvent(m5.event.Event):
+
+            def __init__(self, eventq, period):
+                super().__init__()
+                self.eventq = eventq
+                self.period = period
+                self.eventq.schedule(self, m5.curTick() + self.period)
+
+            def __call__(self):
+                wall_time = datetime.datetime.now().astimezone().isoformat()
+                print(
+                    f"Heartbeat: virtual timestamp {m5.curTick()} ticks, "
+                    f"wall clock {wall_time}",
+                    flush=True,
+                )
+                self.eventq.schedule(self, m5.curTick() + self.period)
+
+        heartbeat_event = HeartbeatEvent(
+            m5.event.mainq, m5.ticks.fromSeconds(0.1)
+        )
 
     if args.stats_dump_period is not None:
         stats_dump_period = m5.ticks.fromSeconds(args.stats_dump_period)
@@ -485,6 +509,11 @@ def main():
         type=_to_latency,
         default=None,
         help="Stats collection window length, e.g. 100us",
+    )
+    parser.add_argument(
+        "--heartbeat",
+        action="store_true",
+        help="Print the virtual timestamp and wall clock time every 100ms.",
     )
 
     # SimBricks args
