@@ -1819,8 +1819,169 @@ class ThunderX_ISA(ArmISA):
     midr = 0x431F0A11
 
 
+# Bit masks used by MinorCPU's shared issue-port reservation support.
+THUNDERX_PIPE0 = 0b01
+THUNDERX_PIPE1 = 0b10
+THUNDERX_BOTH_PIPES = THUNDERX_PIPE0 | THUNDERX_PIPE1
+
+
+class ThunderX_CLZ_A64(HPI_DefaultA64Int):
+    """CLZ is an integer ALU op in gem5, but is pipe-1-only on ThunderX."""
+
+    description = "ThunderX_CLZ_A64"
+    mask, match = a64_opcode("x101_1010_1100_0000__0001_00xx_xxxx_xxxx")
+    opClasses = minorMakeOpClassSet(["IntAlu"])
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_CRC_A64(HPI_DefaultA64Int):
+    """CRC32 variants are represented by gem5's generic IntAlu class."""
+
+    description = "ThunderX_CRC_A64"
+    mask, match = a64_opcode("x001_1010_1100_xxxx__01xx_xx00_xxxx_xxxx")
+    opClasses = minorMakeOpClassSet(["IntAlu"])
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_SVC_HVC_SMC_A64(HPI_DefaultA64Int):
+    """These trap instructions are not marked as control flow by gem5."""
+
+    description = "ThunderX_SVC_HVC_SMC_A64"
+    mask, match = a64_opcode("1101_0100_000x_xxxx__xxxx_xxxx_xxxx_00xx")
+    opClasses = minorMakeOpClassSet(["IntAlu"])
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_BRK_A64(HPI_DefaultA64Int):
+    description = "ThunderX_BRK_A64"
+    mask, match = a64_opcode("1101_0100_0010_xxxx__xxxx_xxxx_xxxx_0000")
+    opClasses = minorMakeOpClassSet(["IntAlu"])
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_HLT_A64(HPI_DefaultA64Int):
+    description = "ThunderX_HLT_A64"
+    mask, match = a64_opcode("1101_0100_0100_xxxx__xxxx_xxxx_xxxx_0000")
+    opClasses = minorMakeOpClassSet(["IntAlu"])
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+def copyTimings(timings):
+    """Return detached copies suitable for a new functional-unit class.
+
+    Timing rules in the HPI classes are already parented to their source FU.
+    A new timing vector must not combine those with fresh rules: gem5 then
+    considers the vector parented and leaves the fresh rules orphaned.
+    """
+
+    return [timing(_memo={}) for timing in timings]
+
+
+def thunderxIntPipe1Timings(base_timings):
+    """Add ThunderX pipe-1 exceptions to copies of HPI timing rules."""
+
+    return [
+        ThunderX_CLZ_A64(),
+        ThunderX_CRC_A64(),
+        ThunderX_SVC_HVC_SMC_A64(),
+        ThunderX_BRK_A64(),
+        ThunderX_HLT_A64(),
+    ] + copyTimings(base_timings)
+
+
+class ThunderX_IntFU(HPI_IntFU):
+    # Simple integer instructions can use either pipe, but control-flow
+    # instructions are restricted to pipe 1.
+    issuePortReservations = [THUNDERX_PIPE0, THUNDERX_PIPE1]
+    controlIssuePortReservations = [THUNDERX_PIPE1]
+    timings = thunderxIntPipe1Timings(HPI_IntFU.timings)
+
+
+class ThunderX_Int2FU(HPI_Int2FU):
+    issuePortReservations = [THUNDERX_PIPE0, THUNDERX_PIPE1]
+    controlIssuePortReservations = [THUNDERX_PIPE1]
+    timings = thunderxIntPipe1Timings(HPI_Int2FU.timings)
+
+
+class ThunderX_IntMulFU(HPI_IntMulFU):
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_IntDivFU(HPI_IntDivFU):
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_FloatSimdFU(HPI_FloatSimdFU):
+    # GCC schedules AES on pipe 1.  HPI does not otherwise expose these
+    # gem5 op classes, so add them here without changing their latencies.
+    opClasses = minorMakeOpClassSet(
+        [
+            "FloatAdd",
+            "FloatCmp",
+            "FloatCvt",
+            "FloatMult",
+            "FloatDiv",
+            "FloatSqrt",
+            "FloatMisc",
+            "FloatMultAcc",
+            "SimdAdd",
+            "SimdAddAcc",
+            "SimdAlu",
+            "SimdCmp",
+            "SimdCvt",
+            "SimdMisc",
+            "SimdMult",
+            "SimdMultAcc",
+            "SimdMatMultAcc",
+            "SimdShift",
+            "SimdShiftAcc",
+            "SimdSqrt",
+            "SimdFloatAdd",
+            "SimdFloatAlu",
+            "SimdFloatCmp",
+            "SimdFloatCvt",
+            "SimdFloatDiv",
+            "SimdFloatMisc",
+            "SimdFloatMult",
+            "SimdFloatMultAcc",
+            "SimdFloatMatMultAcc",
+            "SimdFloatSqrt",
+            "SimdAes",
+            "SimdAesMix",
+        ]
+    )
+    issuePortReservations = [THUNDERX_PIPE1]
+
+
+class ThunderX_MemFU(HPI_MemFU):
+    issuePortReservations = [THUNDERX_PIPE0]
+
+
+class ThunderX_MiscFU(HPI_MiscFU):
+    # Be conservative for instructions that GCC models as unknown/multiple.
+    issuePortReservations = [THUNDERX_BOTH_PIPES]
+
+
+class ThunderX_FUPool(MinorFUPool):
+    """
+    HPI timing with first-generation ThunderX issue-port contention.Based on gcc's scheduler model:
+    https://github.com/gcc-mirror/gcc/blob/790e293c304f8690919b38ec43760cc3815a3947/gcc/config/aarch64/thunderx.md
+    """
+
+    funcUnits = [
+        ThunderX_IntFU(),
+        ThunderX_Int2FU(),
+        ThunderX_IntMulFU(),
+        ThunderX_IntDivFU(),
+        ThunderX_FloatSimdFU(),
+        ThunderX_MemFU(),
+        ThunderX_MiscFU(),
+    ]
+
+
 class ThunderX_CPU(HPI):
     ArchISA = ThunderX_ISA
+    executeFuncUnits = ThunderX_FUPool()
 
 
 __all__ = [
