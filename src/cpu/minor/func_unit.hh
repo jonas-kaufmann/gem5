@@ -115,6 +115,10 @@ class MinorFUTiming: public SimObject
      *  issued in this FU */
     bool suppress;
 
+    /** Alternative bit-mask issue-port reservations for instructions
+     *  matching this timing.  An empty vector uses the FU reservation. */
+    std::vector<unsigned int> issuePortReservations;
+
     /** Extra latency that the instruction should spend at the end of
      *  the pipeline */
     Cycles extraCommitLat;
@@ -171,6 +175,13 @@ class MinorFU : public SimObject
      *  latency != 0) result from */
     std::vector<unsigned int> cantForwardFromFUIndices;
 
+    /** Alternative bit-mask issue-port reservations for this FU. */
+    std::vector<unsigned int> issuePortReservations;
+
+    /** Alternative bit-mask reservations for control-flow instructions.
+     *  An empty vector means use issuePortReservations. */
+    std::vector<unsigned int> controlIssuePortReservations;
+
     /** Extra timing info to give timings to individual ops */
     std::vector<MinorFUTiming *> timings;
 
@@ -181,6 +192,8 @@ class MinorFU : public SimObject
         opLat(params.opLat),
         issueLat(params.issueLat),
         cantForwardFromFUIndices(params.cantForwardFromFUIndices),
+        issuePortReservations(params.issuePortReservations),
+        controlIssuePortReservations(params.controlIssuePortReservations),
         timings(params.timings)
     { }
 };

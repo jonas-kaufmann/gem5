@@ -110,6 +110,11 @@ class MinorFUTiming(SimObject):
     description = Param.String(
         "", "description string of the decoding/inst class"
     )
+    issuePortReservations = VectorParam.Unsigned(
+        [],
+        "alternative bit-mask issue-port reservations for matching"
+        " instructions; an empty list uses the functional unit reservation",
+    )
 
 
 def minorMakeOpClassSet(op_classes):
@@ -140,6 +145,17 @@ class MinorFU(SimObject):
         [],
         "list of FU indices from which this FU can't receive and early"
         " (forwarded) result",
+    )
+
+    issuePortReservations = VectorParam.Unsigned(
+        [],
+        "alternative bit-mask issue-port reservations for this FU; an empty"
+        " list disables port reservation",
+    )
+    controlIssuePortReservations = VectorParam.Unsigned(
+        [],
+        "alternative bit-mask issue-port reservations for control-flow"
+        " instructions on this FU; an empty list uses issuePortReservations",
     )
 
 
