@@ -43,6 +43,7 @@ at: http://www.arm.com/ResearchEnablement/SystemModeling
 """
 
 from m5.objects import *
+from m5.params import *
 
 
 # Simple function to allow a string of [01x_] to be converted into a
@@ -1806,6 +1807,8 @@ class ThunderX_ICache(HPI_ICache):
 class ThunderX_DCache(HPI_DCache):
     # Rough config for a Cavium ThunderX
     size = "32KiB"
+    prefetcher = NULL
+    write_allocator = NULL
 
 
 class ThunderX_L2(HPI_L2):
@@ -1813,6 +1816,7 @@ class ThunderX_L2(HPI_L2):
     size = "16MiB"
     mshrs = 64
     write_buffers = 64
+    write_allocator = NULL
 
 
 class ThunderX_ISA(ArmISA):
