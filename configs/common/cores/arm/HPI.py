@@ -1884,6 +1884,16 @@ class ThunderX_DefaultA64Mul(HPI_DefaultA64Mul):
     description = "ThunderX_DefaultA64Mul"
     srcRegsRelativeLats = [2, 2, 2, 0]
 
+
+class ThunderX_DefaultMem64(HPI_DefaultMem64):
+    """Give an A64 L1 load a three-cycle nominal result latency."""
+
+    description = "ThunderX_DefaultMem64"
+    # HPI_MemFU contributes the first cycle.  Consumers which cannot forward
+    # from the memory FU therefore observe the three-cycle ThunderX latency.
+    extraAssumedLat = 2
+
+
 def copyTimings(timings):
     """Return detached copies suitable for a new functional-unit class.
 
@@ -2000,6 +2010,7 @@ class ThunderX_MemFU(HPI_MemFU):
     # Preserve one-cycle Int-to-Store forwarding, but do not shorten values
     # produced by the multiplier or another memory operation.
     cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
+    timings = [HPI_DefaultMem(), ThunderX_DefaultMem64()]
 
 
 class ThunderX_MiscFU(HPI_MiscFU):
