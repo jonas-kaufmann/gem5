@@ -1870,6 +1870,19 @@ class ThunderX_HLT_A64(HPI_DefaultA64Int):
     issuePortReservations = [THUNDERX_PIPE1]
 
 
+class ThunderX_MADD_A64(HPI_MADD_A64):
+    """ThunderX integer-to-multiply forwarding for MADD and its MUL alias."""
+
+    description = "ThunderX_MADD_A64"
+    srcRegsRelativeLats = [2, 2, 2, 0]
+
+
+class ThunderX_DefaultA64Mul(HPI_DefaultA64Mul):
+    """ThunderX integer-to-multiply forwarding for other A64 multiplies."""
+
+    description = "ThunderX_DefaultA64Mul"
+    srcRegsRelativeLats = [2, 2, 2, 0]
+
 def copyTimings(timings):
     """Return detached copies suitable for a new functional-unit class.
 
@@ -1879,6 +1892,20 @@ def copyTimings(timings):
     """
 
     return [timing(_memo={}) for timing in timings]
+
+
+def thunderxMulTimings(base_timings):
+    """Replace A64 multiply input timings while copying the HPI rules."""
+
+    timings = []
+    for timing in base_timings:
+        if isinstance(timing, HPI_MADD_A64):
+            timings.append(ThunderX_MADD_A64())
+        elif isinstance(timing, HPI_DefaultA64Mul):
+            timings.append(ThunderX_DefaultA64Mul())
+        else:
+            timings.append(timing(_memo={}))
+    return timings
 
 
 def thunderxIntPipe1Timings(base_timings):
@@ -1898,17 +1925,27 @@ class ThunderX_IntFU(HPI_IntFU):
     # instructions are restricted to pipe 1.
     issuePortReservations = [THUNDERX_PIPE0, THUNDERX_PIPE1]
     controlIssuePortReservations = [THUNDERX_PIPE1]
+    # The HPI relative latency still provides one-cycle Int-to-Int
+    # forwarding, but ThunderX consumers must observe the full four-cycle
+    # multiply and three-cycle L1-load result latencies.
+    cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
     timings = thunderxIntPipe1Timings(HPI_IntFU.timings)
 
 
 class ThunderX_Int2FU(HPI_Int2FU):
     issuePortReservations = [THUNDERX_PIPE0, THUNDERX_PIPE1]
     controlIssuePortReservations = [THUNDERX_PIPE1]
+    cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
     timings = thunderxIntPipe1Timings(HPI_Int2FU.timings)
 
 
 class ThunderX_IntMulFU(HPI_IntMulFU):
     issuePortReservations = [THUNDERX_PIPE1]
+    # Allow the two-cycle relative timing above to turn HPI's three-cycle
+    # integer result into ThunderX's one-cycle Int-to-Mul forwarding.  Do not
+    # shorten dependent multiplies or load-to-multiply dependencies.
+    cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
+    timings = thunderxMulTimings(HPI_IntMulFU.timings)
 
 
 class ThunderX_IntDivFU(HPI_IntDivFU):
@@ -1959,6 +1996,9 @@ class ThunderX_FloatSimdFU(HPI_FloatSimdFU):
 
 class ThunderX_MemFU(HPI_MemFU):
     issuePortReservations = [THUNDERX_PIPE0]
+    # Preserve one-cycle Int-to-Store forwarding, but do not shorten values
+    # produced by the multiplier or another memory operation.
+    cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
 
 
 class ThunderX_MiscFU(HPI_MiscFU):
