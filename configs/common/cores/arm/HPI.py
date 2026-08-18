@@ -1807,6 +1807,7 @@ class ThunderX_ICache(HPI_ICache):
 class ThunderX_DCache(HPI_DCache):
     # Rough config for a Cavium ThunderX
     size = "32KiB"
+    data_latency = 2
     prefetcher = NULL
     write_allocator = NULL
 
