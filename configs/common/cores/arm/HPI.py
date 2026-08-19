@@ -1891,7 +1891,12 @@ class ThunderX_DefaultMem64(HPI_DefaultMem64):
     description = "ThunderX_DefaultMem64"
     # HPI_MemFU contributes the first cycle.  Consumers which cannot forward
     # from the memory FU therefore observe the three-cycle ThunderX latency.
-    extraAssumedLat = 2
+    extraAssumedLat = 1
+    # FIXME: proper value for `extraAssumedLat` from` microbenchmarks should be
+    # 2 but this compensates for some throughput modeling error.
+    #
+    # LDR/EOR stream:  Enzian 1.127, gem5 3.033 cycles/sample
+    # EOR/load stream: Enzian 1.126, gem5 2.033 cycles/sample
 
 
 def copyTimings(timings):
