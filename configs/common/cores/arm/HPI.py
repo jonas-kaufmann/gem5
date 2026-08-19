@@ -1876,6 +1876,11 @@ class ThunderX_MADD_A64(HPI_MADD_A64):
 
     description = "ThunderX_MADD_A64"
     srcRegsRelativeLats = [2, 2, 2, 0]
+    # Model ThunderX's four-cycle multiply latency with the FU pipeline depth,
+    # not a tail delay.  Minor's extraCommitLat stalls the self-stalling FU
+    # pipeline and incorrectly reduces independent MUL throughput to one every
+    # two cycles.
+    extraCommitLat = 0
 
 
 class ThunderX_DefaultA64Mul(HPI_DefaultA64Mul):
@@ -1956,10 +1961,16 @@ class ThunderX_Int2FU(HPI_Int2FU):
 
 
 class ThunderX_IntMulFU(HPI_IntMulFU):
-    issuePortReservations = [THUNDERX_PIPE1]
+    # Enzian measurements show a fully pipelined multiplier (one independent
+    # MUL per cycle), but MUL cannot dual-issue with an ordinary integer ALU
+    # operation in either instruction order.  Reserve both issue slots while
+    # retaining a one-cycle issue interval.
+    issuePortReservations = [THUNDERX_BOTH_PIPES]
+    opLat = 4
     # Allow the two-cycle relative timing above to turn HPI's three-cycle
-    # integer result into ThunderX's one-cycle Int-to-Mul forwarding.  Do not
-    # shorten dependent multiplies or load-to-multiply dependencies.
+    # integer result into ThunderX's one-cycle Int-to-Mul forwarding.  The
+    # multiplier's four-stage pipeline supplies its full result latency; do
+    # not shorten dependent multiplies or load-to-multiply dependencies.
     cantForwardFromFUIndices = [2, 5]  # IntMul, Mem
     timings = thunderxMulTimings(HPI_IntMulFU.timings)
 
