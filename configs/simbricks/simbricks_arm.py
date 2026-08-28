@@ -45,7 +45,7 @@ import sys
 
 import m5
 from m5.objects import *
-from m5.objects import Armv8
+from m5.objects import Armv81
 from m5.options import *
 from m5.util import addToPath
 from m5.util.dot_writer import do_dot
@@ -164,7 +164,7 @@ def create(args):
         workload=ArmFsLinux(object_file=SysPaths.binary(args.kernel)),
         readfile=args.script,
     )
-    system.release = Armv8()
+    system.release = Armv81()
     system.exit_on_work_items = args.stats_dump_period is not None
 
     terminal_dest = "file" if args.write_terminal_output else "stdoutput"
