@@ -511,6 +511,13 @@ def main():
         help="Stats collection window length, e.g. 100us",
     )
     parser.add_argument(
+        "--stats-file",
+        type=str,
+        default=None,
+        help="Override gem5's statistics output URI, e.g. "
+        "text://stats.txt?desc=False&spaces=False",
+    )
+    parser.add_argument(
         "--heartbeat",
         action="store_true",
         help="Print the virtual timestamp and wall clock time every 100ms.",
@@ -526,6 +533,13 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.stats_file is not None:
+        # gem5's main argument parser has already registered its default
+        # stats.txt output. Replace it so this script-level option produces
+        # one output file rather than writing both the default and override.
+        m5.stats.outputList.clear()
+        m5.stats.addStatVisitor(args.stats_file)
 
     if (args.stats_dump_period is None) != (args.stats_dump_window is None):
         parser.error(
