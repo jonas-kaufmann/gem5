@@ -538,10 +538,9 @@ def main():
             parser.error("--stats-dump-period must be greater than zero")
         if args.stats_dump_window <= 0:
             parser.error("--stats-dump-window must be greater than zero")
-        if args.stats_dump_window >= args.stats_dump_period:
+        if args.stats_dump_window > args.stats_dump_period:
             parser.error(
-                "--stats-dump-window must be smaller than "
-                "--stats-dump-period"
+                "--stats-dump-period must not be smaller than--stats-dump-window"
             )
 
     root = Root(full_system=True)
