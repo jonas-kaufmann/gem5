@@ -288,11 +288,20 @@ Device::write(PacketPtr pkt)
 Tick
 Device::writeConfig(PacketPtr pkt)
 {
+    int offset = pkt->getAddr() & PCI_CONFIG_SIZE;
     bool intx_before = !!(this->config().command & PCI_CMD_INTXDIS);
     bool msi_before = (msicap.mc & 0x1);
     bool msix_before = (msixcap.mxc & 0x8000);
 
-    Tick t = PciEndpoint::writeConfig(pkt);
+    bool msi_cap = MSICAP_BASE && offset >= MSICAP_BASE &&
+                   offset < MSICAP_BASE + sizeof(msicap);
+    bool msix_cap = MSIXCAP_BASE && offset >= MSIXCAP_BASE &&
+                    offset < MSIXCAP_BASE + sizeof(msixcap);
+
+    // PciEndpoint handles the type 0 header, including BARs, while
+    // PciDevice owns the MSI and MSI-X capability storage.
+    Tick t = msi_cap || msix_cap ? PciDevice::writeConfig(pkt) :
+                                  PciEndpoint::writeConfig(pkt);
 
     bool intx_after = !!(this->config().command & PCI_CMD_INTXDIS);
     bool msi_after = (msicap.mc & 0x1);
