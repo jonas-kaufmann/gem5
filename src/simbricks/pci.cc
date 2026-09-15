@@ -470,16 +470,25 @@ void
 Device::msi_signal(uint16_t vec)
 {
     DMACompl *dc;
+    unsigned enabled_vectors = 1U << ((msicap.mc >> 4) & 0x7);
 
     DPRINTF(SimBricksPci, "simbricks-pci: received MSI intr vec %u\n", vec);
 
+    if (vec >= enabled_vectors) {
+        warn("simbricks-pci: MSI vector %u exceeds %u enabled vectors\n",
+             vec, enabled_vectors);
+        return;
+    }
+
     if ((msicap.mc & 0x1) != 0 &&
-            ((msicap.mmask & (1 << vec)) == 0))
+            ((msicap.mmask & (1U << vec)) == 0))
     {
+        uint16_t data_mask = enabled_vectors - 1;
+        uint16_t data = (msicap.md & ~data_mask) | vec;
         DPRINTF(SimBricksPci, "simbricks-pci: MSI addr=%x val=%x mask=%x\n",
-                msicap.ma, msicap.md, msicap.mmask);
+                msicap.ma, data, msicap.mmask);
         dc = new DMACompl(this, 0, 4, DMACompl::MSI, name());
-        memcpy(dc->buf, &msicap.md, 2);
+        memcpy(dc->buf, &data, 2);
         memset(dc->buf + 2, 0, 2);
 
         dmaWrite(pciToDma(msicap.ma | ((uint64_t) msicap.mua << 32)),
