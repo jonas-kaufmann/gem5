@@ -488,7 +488,16 @@ class SimpleSystem(BaseSimpleSystem):
 
         if hasattr(self.realview.gic, "cpu_addr"):
             self.gic_cpu_addr = self.realview.gic.cpu_addr
-        self.realview.attachOnChipIO(self.membus, self.iobridge)
+
+        # Keep on-chip devices' PIO ports on the coherent memory bus, but route
+        # their DMA through the I/O hierarchy. In particular, this puts GICv3
+        # ITS command-queue accesses behind iocache in timing systems instead of
+        # allowing them to re-enter membus directly, fixing a panic.
+        on_chip_dma_ports = []
+        self.realview.attachOnChipIO(
+            self.membus, self.iobridge, dma_ports=on_chip_dma_ports
+        )
+        self.iobus.cpu_side_ports = on_chip_dma_ports
         self.realview.attachIO(self.iobus)
         self.system_port = self.membus.cpu_side_ports
 
