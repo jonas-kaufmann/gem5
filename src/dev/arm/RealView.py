@@ -212,6 +212,19 @@ class GenericArmPciHost(GenericPciHost):
         ranges += local_state.sizeCells(0x40000000)  # Fixed size
         node.append(FdtPropertyWords("ranges", ranges))
 
+        # Describe the PCI requester ID to GIC ITS DeviceID mapping. Without
+        # this, Linux cannot associate the ITS MSI domain with this PCI host
+        # bridge, causing pci_alloc_irq_vectors() to fail.
+        platform = self._parent.unproxy(self)
+        if hasattr(platform.gic, "its") and platform.gic.its != NULL:
+            its = platform.gic.its.unproxy(self)
+            node.append(
+                FdtPropertyWords(
+                    "msi-map",
+                    [0, state.phandle(its), 0, 1 << 16],
+                )
+            )
+
         if str(self.int_policy) == "ARM_PCI_INT_DEV":
             gic = self._parent.unproxy(self).gic
             int_phandle = state.phandle(gic)

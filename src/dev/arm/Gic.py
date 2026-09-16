@@ -280,6 +280,7 @@ class Gicv3Its(BasicPioDevice):
         node.appendCompatible(["arm,gic-v3-its"])
         node.append(FdtProperty("msi-controller"))
         node.append(FdtPropertyWords("#msi-cells", [1]))
+        node.appendPhandle(self)
 
         return node
 
