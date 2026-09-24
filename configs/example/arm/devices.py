@@ -489,14 +489,37 @@ class SimpleSystem(BaseSimpleSystem):
         if hasattr(self.realview.gic, "cpu_addr"):
             self.gic_cpu_addr = self.realview.gic.cpu_addr
 
-        # Keep on-chip devices' PIO ports on the coherent memory bus, but route
-        # their DMA through the I/O hierarchy. In particular, this puts GICv3
-        # ITS command-queue accesses behind iocache in timing systems instead of
-        # allowing them to re-enter membus directly, fixing a panic.
+        # Explicitly not using `self.realview.attachOnChipIO(...)` here. We keep
+        # on-chip PIO on membus, except the GIC ITS, which must be connected to
+        # iobus to receive PCI MSI writes on iobus. Further, we route on-chip
+        # DMA through iobus so ITS command-queue accesses pass through iocache
+        # in timing systems.
         on_chip_dma_ports = []
-        self.realview.attachOnChipIO(
-            self.membus, self.iobridge, dma_ports=on_chip_dma_ports
+        its = getattr(self.realview.gic, "its", NULL)
+
+        # on_chip_memory
+        self.realview._attach_mem(
+            self.realview._on_chip_memory(), self.membus
         )
+
+        # on_chip_devices
+        on_chip_devices = [
+            device for device in self.realview._on_chip_devices()
+            if device is not its
+        ]
+        self.realview._attach_io(
+            on_chip_devices, self.membus, on_chip_dma_ports
+        )
+        if its != NULL:
+            its.pio = self.iobus.mem_side_ports
+            on_chip_dma_ports.append(its.dma)
+
+        # iobridge
+        bridge_ranges = list(self.realview._off_chip_ranges)
+        if its != NULL:
+            bridge_ranges.append(AddrRange(start=its.pio_addr, size=its.pio_size))
+        self.iobridge.ranges = bridge_ranges
+
         self.iobus.cpu_side_ports = on_chip_dma_ports
         self.realview.attachIO(self.iobus)
         self.system_port = self.membus.cpu_side_ports
