@@ -1630,6 +1630,15 @@ class VExpress_GEM5_V2_Base(VExpress_GEM5_Base):
     # Limiting to 128 since it will otherwise overlap with PCI space
     gic.cpu_max = 128
 
+    def attachPciDevice(self, device, *args, **kwargs):
+        super().attachPciDevice(device, *args, **kwargs)
+        # The ITS requires sid to be set to the PCI requester ID in order to handle MSI.
+        device.sid = (
+            (int(device.pci_bus) << 8)
+            | (int(device.pci_dev) << 3)
+            | int(device.pci_func)
+        )
+
     def _on_chip_devices(self):
         return super()._on_chip_devices() + [self.gic, self.gic.its]
 
