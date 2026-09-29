@@ -41,6 +41,7 @@ import argparse
 import atexit
 import datetime
 import os
+import socket
 import sys
 
 import m5
@@ -165,7 +166,10 @@ def create(args):
         readfile=args.script,
     )
     system.release = Armv81()
-    system.exit_on_work_items = args.stats_dump_period is not None
+    system.exit_on_work_items = (
+        args.stats_dump_period is not None
+        or args.workbegin_control_socket is not None
+    )
 
     terminal_dest = "file" if args.write_terminal_output else "stdoutput"
     system.terminal = Terminal(port=3456, outfile=terminal_dest)
@@ -297,6 +301,18 @@ def run(args):
             exit_dump_unregistered = True
         return event
 
+    def start_workbegin_endpoint():
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as control:
+            control.settimeout(30)
+            control.connect(args.workbegin_control_socket)
+            control.sendall(b"START\n")
+            with control.makefile("rb") as reply_file:
+                reply = reply_file.readline(128).strip()
+        fields = reply.split()
+        if len(fields) != 2 or fields[0] != b"OK" or not fields[1].isdigit():
+            raise RuntimeError(f"PCAP endpoint rejected START: {reply!r}")
+        print(f"PCAP replay started at endpoint tick {fields[1].decode()}")
+
     def handle_exit(event, dump_partial_stats=False):
         nonlocal sampling_active, sampling_waiting_for_workbegin, sampling_finished
 
@@ -306,6 +322,8 @@ def run(args):
 
         if "workbegin" in exit_msg:
             print(f"workbegin ({event.getCode()}) @ {m5.curTick()}")
+            if args.workbegin_control_socket is not None:
+                start_workbegin_endpoint()
             if sampling_waiting_for_workbegin:
                 print(f"Starting stats sampling at tick {m5.curTick()}")
                 sampling_waiting_for_workbegin = False
@@ -314,6 +332,8 @@ def run(args):
 
         if "workend" in exit_msg:
             print(f"workend ({event.getCode()}) @ {m5.curTick()}")
+            if args.stats_dump_period is None:
+                return "continue"
             if sampling_waiting_for_workbegin:
                 return "continue"
             if not sampling_finished:
@@ -521,6 +541,12 @@ def main():
         "--heartbeat",
         action="store_true",
         help="Print the virtual timestamp and wall clock time every 100ms.",
+    )
+    parser.add_argument(
+        "--workbegin-control-socket",
+        type=str,
+        default=None,
+        help="Send START to this Unix socket at workbegin before resuming",
     )
 
     # SimBricks args
