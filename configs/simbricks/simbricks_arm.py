@@ -302,17 +302,18 @@ def run(args):
         return event
 
     def control_replay(command):
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as control:
-            control.settimeout(1)
-            control.connect(args.workbegin_control_socket)
-            control.sendall(command.encode("ascii") + b"\n")
-            with control.makefile("rb") as reply_file:
-                reply = reply_file.readline(128).strip()
-        fields = reply.split()
-        if len(fields) != 2 or fields[0] != b"OK" or not fields[1].isdigit():
-            raise RuntimeError(f"PCAP endpoint rejected {command}: {reply!r}")
-        action = "started" if command == "START" else "stopped"
-        print(f"PCAP replay {action} at endpoint tick {fields[1].decode()}")
+        for path in args.workbegin_control_socket:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as control:
+                control.settimeout(1)
+                control.connect(path)
+                control.sendall(command.encode("ascii") + b"\n")
+                with control.makefile("rb") as reply_file:
+                    reply = reply_file.readline(128).strip()
+            fields = reply.split()
+            if len(fields) != 2 or fields[0] != b"OK" or not fields[1].isdigit():
+                raise RuntimeError(f"PCAP endpoint {path} rejected {command}: {reply!r}")
+            action = "started" if command == "START" else "stopped"
+            print(f"PCAP replay {action} at {path} tick {fields[1].decode()}")
 
     def handle_exit(event, dump_partial_stats=False):
         nonlocal sampling_active, sampling_waiting_for_workbegin, sampling_finished
@@ -548,8 +549,9 @@ def main():
     parser.add_argument(
         "--workbegin-control-socket",
         type=str,
+        action="append",
         default=None,
-        help="Send START at workbegin and STOP at workend to this Unix socket",
+        help="Send START at workbegin and STOP at workend to each Unix socket",
     )
 
     # SimBricks args
