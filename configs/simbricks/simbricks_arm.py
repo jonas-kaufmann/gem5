@@ -301,17 +301,18 @@ def run(args):
             exit_dump_unregistered = True
         return event
 
-    def start_workbegin_endpoint():
+    def control_replay(command):
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as control:
-            control.settimeout(30)
+            control.settimeout(1)
             control.connect(args.workbegin_control_socket)
-            control.sendall(b"START\n")
+            control.sendall(command.encode("ascii") + b"\n")
             with control.makefile("rb") as reply_file:
                 reply = reply_file.readline(128).strip()
         fields = reply.split()
         if len(fields) != 2 or fields[0] != b"OK" or not fields[1].isdigit():
-            raise RuntimeError(f"PCAP endpoint rejected START: {reply!r}")
-        print(f"PCAP replay started at endpoint tick {fields[1].decode()}")
+            raise RuntimeError(f"PCAP endpoint rejected {command}: {reply!r}")
+        action = "started" if command == "START" else "stopped"
+        print(f"PCAP replay {action} at endpoint tick {fields[1].decode()}")
 
     def handle_exit(event, dump_partial_stats=False):
         nonlocal sampling_active, sampling_waiting_for_workbegin, sampling_finished
@@ -323,7 +324,7 @@ def run(args):
         if "workbegin" in exit_msg:
             print(f"workbegin ({event.getCode()}) @ {m5.curTick()}")
             if args.workbegin_control_socket is not None:
-                start_workbegin_endpoint()
+                control_replay("START")
             if sampling_waiting_for_workbegin:
                 print(f"Starting stats sampling at tick {m5.curTick()}")
                 sampling_waiting_for_workbegin = False
@@ -332,6 +333,8 @@ def run(args):
 
         if "workend" in exit_msg:
             print(f"workend ({event.getCode()}) @ {m5.curTick()}")
+            if args.workbegin_control_socket is not None:
+                control_replay("STOP")
             if args.stats_dump_period is None:
                 return "continue"
             if sampling_waiting_for_workbegin:
@@ -546,7 +549,7 @@ def main():
         "--workbegin-control-socket",
         type=str,
         default=None,
-        help="Send START to this Unix socket at workbegin before resuming",
+        help="Send START at workbegin and STOP at workend to this Unix socket",
     )
 
     # SimBricks args
