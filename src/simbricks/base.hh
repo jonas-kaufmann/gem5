@@ -69,6 +69,8 @@ class Adapter : public EventManager
     Adapter(SimObject &parent, bool sync_);
     virtual ~Adapter();
 
+    void terminate(enum SimbricksProtoBaseTerminateReason reason);
+
     void cfgSetPollInterval(Tick i) {
         pollInterval = i;
     }

@@ -33,6 +33,7 @@ namespace simbricks {
 namespace mem {
 
 extern "C" {
+#include <simbricks/base/proto.h>
 #include <simbricks/mem/if.h>
 
 }
@@ -237,6 +238,7 @@ void
 Adapter::serialize(CheckpointOut &cp) const
 {
     SimObject::serialize(cp);
+    adapter.terminate(SIMBRICKS_PROTO_TERMINATE_CHECKPOINT);
 }
 
 void

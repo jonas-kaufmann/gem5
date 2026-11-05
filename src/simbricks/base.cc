@@ -24,6 +24,10 @@
 
 #include "simbricks/base.hh"
 
+#include <chrono>
+#include <thread>
+
+#include "base/logging.hh"
 #include "base/trace.hh"
 #include "debug/SimBricks.hh"
 #include "debug/SimBricksSync.hh"
@@ -33,6 +37,10 @@
 
 namespace gem5 {
 namespace simbricks {
+extern "C" {
+#include <simbricks/base/proto.h>
+}
+
 namespace base {
 
 Adapter::Adapter(SimObject &parent, bool sync_)
@@ -60,6 +68,21 @@ Adapter::close()
         SimbricksBaseIfSHMPoolUnlink(pool);
         SimbricksBaseIfSHMPoolUnmap(pool);
     }
+}
+
+void
+Adapter::terminate(enum SimbricksProtoBaseTerminateReason reason)
+{
+    // Bounded wall-clock retries: an exited peer cannot free SHM queue slots.
+    const auto deadline =
+            std::chrono::steady_clock::now() + std::chrono::seconds(1);
+    const uint64_t timestamp = curTickAsSimbricksTs();
+    do {
+        if (!SimBricksBaseIfOutTerminate(&baseIf, timestamp, reason))
+            return;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    } while (std::chrono::steady_clock::now() < deadline);
+    warn("SimBricks Adapter: could not send termination message (exit reason %u)", reason);
 }
 
 void

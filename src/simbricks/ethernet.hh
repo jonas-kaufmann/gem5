@@ -29,6 +29,7 @@
 
 #include "dev/net/etherint.hh"
 #include "params/SimBricksEthernet.hh"
+#include "sim/serialize.hh"
 #include "simbricks/base.hh"
 
 namespace gem5 {
@@ -46,7 +47,7 @@ class Adapter :
 {
 protected:
     // SimBricks base adapter
-    base::GenericBaseAdapter
+    mutable base::GenericBaseAdapter
         <SimbricksProtoNetMsg, SimbricksProtoNetMsg> adapter;
     bool sync;
 
@@ -83,6 +84,7 @@ public:
     virtual Port &getPort(const std::string &if_name,
                           PortID idx=InvalidPortID) override;
 
+    void serialize(CheckpointOut &cp) const override;
     void init() override;
     virtual void startup() override;
 };

@@ -26,12 +26,14 @@
 #include <simbricks/ethernet.hh>
 
 #include "base/trace.hh"
+#include "sim/sim_object.hh"
 
 namespace gem5 {
 namespace simbricks {
 namespace ethernet {
 
 extern "C" {
+#include <simbricks/base/proto.h>
 #include <simbricks/network/if.h>
 
 }
@@ -136,6 +138,13 @@ Adapter::recvPacket(EthPacketPtr packet)
     adapter.outSend(msg_to, SIMBRICKS_PROTO_NET_MSG_PACKET);
     interface->recvDone();
     return true;
+}
+
+void
+Adapter::serialize(CheckpointOut &cp) const
+{
+    SimObject::serialize(cp);
+    adapter.terminate(SIMBRICKS_PROTO_TERMINATE_CHECKPOINT);
 }
 
 void

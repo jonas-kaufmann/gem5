@@ -27,6 +27,7 @@
 
 #include "mem/qport.hh"
 #include "params/SimBricksMem.hh"
+#include "sim/serialize.hh"
 #include "sim/sim_object.hh"
 #include "simbricks/base.hh"
 
@@ -104,7 +105,7 @@ class Adapter :
 {
 protected:
     // SimBricks base adapter
-    base::GenericBaseAdapter
+    mutable base::GenericBaseAdapter
         <SimbricksProtoMemM2H, SimbricksProtoMemH2M> adapter;
 
     virtual size_t introOutPrepare(void *data, size_t maxlen) override;

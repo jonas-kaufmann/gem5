@@ -27,6 +27,7 @@
 
 #include "dev/pci/device.hh"
 #include "params/SimBricksPci.hh"
+#include "sim/serialize.hh"
 #include "simbricks/base.hh"
 #include "simbricks/pci_bar.hh"
 
@@ -104,7 +105,7 @@ class Device :
 {
 protected:
     // SimBricks base adapter
-    base::GenericBaseAdapter
+    mutable base::GenericBaseAdapter
         <SimbricksProtoPcieD2H, SimbricksProtoPcieH2D> adapter;
 
     virtual size_t introOutPrepare(void *data, size_t maxlen) override;

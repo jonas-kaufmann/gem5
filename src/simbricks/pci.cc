@@ -32,6 +32,7 @@ namespace simbricks {
 namespace pci {
 
 extern "C" {
+#include <simbricks/base/proto.h>
 #include <simbricks/pcie/if.h>
 
 }
@@ -606,6 +607,7 @@ void
 Device::serialize(CheckpointOut &cp) const
 {
     PciEndpoint::serialize(cp);
+    adapter.terminate(SIMBRICKS_PROTO_TERMINATE_CHECKPOINT);
 }
 
 void
