@@ -44,7 +44,7 @@ Device::Device(const Params &p)
     adapter(*this, *this, p.sync),
     overridePort(name() + ".pio", *this),
     sync(p.sync),
-    writesPosted(true)
+    writesPosted(false)
 {
     DPRINTF(SimBricksPci, "simbricks-pci: device constructed\n");
 
